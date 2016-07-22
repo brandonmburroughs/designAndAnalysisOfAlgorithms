@@ -6,7 +6,7 @@ import math.Ordering
   *
   * @param input A list
   * @param ord (implicit) An ordering that provides a "less than" comparison operator
-  * @return An integer count of inversions
+  * @return A sorted array and an integer count of inversions
  */
 def sortAndCountInversions[T](input: List[T])(implicit ord: Ordering[T]): (List[T], Long) = {
   val n = input.length

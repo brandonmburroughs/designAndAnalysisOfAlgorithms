@@ -1,11 +1,12 @@
 import math.Ordering
 
-/*
- * Split and conquer method to count the number of inversions in the given list of elements.
- * An inversion is when a larger number precedes a smaller number.
- *
- * @param A List
- * @returns An integer count of inversions
+/**
+  * Split and conquer method to count the number of inversions in the given list of elements.
+  * An inversion is when a larger number precedes a smaller number.
+  *
+  * @param input A list
+  * @param ord (implicit) An ordering that provides a "less than" comparison operator
+  * @return An integer count of inversions
  */
 def sortAndCountInversions[T](input: List[T])(implicit ord: Ordering[T]): (List[T], Long) = {
   val n = input.length

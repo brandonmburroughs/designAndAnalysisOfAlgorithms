@@ -12,7 +12,7 @@ def loadMap(fileURL: String): Map[Long, Long] = {
   val map = HashMap[Long, Long]()
 
   // Get lines and iterate over them
-  val lines = scala.io.Source.fromFile(fileURL).getLines.map(_.toLong)
+  val lines = scala.io.Source.fromURL(fileURL).getLines.map(_.toLong)
   lines.foreach {
     line =>
       map(line) = line
@@ -41,7 +41,7 @@ def twoSumTargetRange(map: Map[Long, Long], targetFrom: Int, targetTo: Int): Lis
   for (target <- targetFrom to targetTo) {
     breakable {
       for (key <- map.keys) {
-        if (map(target - key) != Long.MaxValue && key != (target - key)) {
+        if (map(target - key) != Long.MaxValue && key != (target - key) && key < (target - key)) {
           twoSums = twoSums :+ (key, target - key)
           break
         }
@@ -59,7 +59,66 @@ def twoSumTargetRange(map: Map[Long, Long], targetFrom: Int, targetTo: Int): Lis
   twoSumsSorted.distinct
 }
 
+/**
+  * Given a range of targets, find two numbers in the hash map that sum to one
+  * of the targets.  Exclude duplicates (i.e. (x, y) and (y, x) only count as
+  * one) and non-distinct values (i.e. (x,x)).
+  *
+  * Note:  This may be faster when looking through a large target range.  This
+  * exploits the sorted order of the List.
+  *
+  * @param nums a `List[Long]` list of numbers
+  * @param targetFrom the minimum target range
+  * @param targetTo the maximum target range
+  * @return a `List[(Int, Int)]` list of pairs of values that sum to a value
+  *         in the target range.
+  */
+def twoSumTargetRangeList(nums: List[Long], targetFrom: Int, targetTo: Int): List[(Long, Long)] = {
+  // Initialize counter
+  var twoSums = List[(Long, Long)]()
+  var targetsFound = List[Int]()
 
+  // Sort the list
+  val numsSorted = nums.sorted
+
+  // Look through list
+  for (i <- numsSorted.indices) {
+    // Always start looking at the next element
+    var j = i + 1
+
+    // Since the array is sorted, we don't need to look past a certain index
+    while (j < numsSorted.length && targetTo - numsSorted(i) > numsSorted(j)) {
+
+      // Consider all targets
+      for (target <- (targetFrom to targetTo).toList diff targetsFound) {
+
+        // Two sum match
+        if (numsSorted(i) + numsSorted(j) == target && numsSorted(i) != numsSorted(j)) {
+          twoSums = twoSums :+ (numsSorted(i), numsSorted(j))
+          targetsFound = targetsFound :+ target
+        }
+      }
+
+      j += 1
+    }
+  }
+
+  twoSums.distinct
+}
+
+
+/**
+  * Given a list of numbers, calculate the median with the addition of each new
+  * number, as if they were being streamed in.
+  *
+  * Note:  This lazy version uses the `List.sorted` method directly, which
+  * would cause this to run slower than potentially possible.
+  *
+  * @param numberList the list of all numbers
+  * @return A list of medians, positioned in the list for the addition of a
+  *         particular number, e.g. the fourth element will be the median
+  *         when there were four elements in the list
+  */
 def medianStreamLessEfficient(numberList: List[Long]): List[Long] = {
   // Initialize median list
   var medianList = List[Long]()
@@ -79,6 +138,19 @@ def medianStreamLessEfficient(numberList: List[Long]): List[Long] = {
 }
 
 
+/**
+  * Given a list of numbers, calculate the median with the addition of each new
+  * number, as if they were being streamed in.
+  *
+  * Note:  This version keeps track of the median using stacks and can run in
+  * linear time.
+  *
+  * @param numberList the list of all numbers
+  * @return A list of medians, positioned in the list for the addition of a
+  *         particular number, e.g. the fourth element will be the median
+  *         when there were four elements in the list
+  */
+// TODO:  convert to running median using stacks
 def medianStream(numberList: List[Long]): List[Long] = {
   // Initialize median list
   var medianList = List[Long]()
@@ -97,26 +169,37 @@ def medianStream(numberList: List[Long]): List[Long] = {
   medianList
 }
 
+
 /**
-  * Test
+  * Tests
   */
 // Homework Question 1
-val questionOneTestInputOneURL = "/Users/rwp651/Documents/capital_one/git/coursera/designAndAnalysisOfAlgorithms/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseOne.txt"//"https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseOne.txt"
+val questionOneTestInputOneURL = "https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseOne.txt"
 val questionOneTestOneMap = loadMap(questionOneTestInputOneURL)
 val questionOneTestOneOutput = 3
 val questionOneTestOneTwoSum = twoSumTargetRange(questionOneTestOneMap, -10000, 10000)
 questionOneTestOneTwoSum.length == questionOneTestOneOutput
 
-val questionOneTestInputTwoURL = "/Users/rwp651/Documents/capital_one/git/coursera/designAndAnalysisOfAlgorithms/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseTwo.txt"//"https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseTwo.txt"
+// List
+val questionOneTestOneLines = scala.io.Source.fromURL(questionOneTestInputOneURL).getLines.map(_.toLong).toList
+twoSumTargetRangeList(questionOneTestOneLines, -10000, 1000).length == questionOneTestOneOutput
+
+
+val questionOneTestInputTwoURL = "https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionOneTestCaseTwo.txt"
 val questionOneTestTwoMap = loadMap(questionOneTestInputTwoURL)
 val questionOneTestTwoOutput = 5
 val questionOneTestTwoTwoSum = twoSumTargetRange(questionOneTestTwoMap, -10000, 10000)
 questionOneTestTwoTwoSum.length == questionOneTestTwoOutput
 
+// List
+val questionOneTestTwoLines = scala.io.Source.fromURL(questionOneTestInputTwoURL).getLines.map(_.toLong).toList
+twoSumTargetRangeList(questionOneTestTwoLines, -10000, 1000).length == questionOneTestTwoOutput
+
+
 // Homework Question 2
-val questionTwoTestInputOneURL = "/Users/rwp651/Documents/capital_one/git/coursera/designAndAnalysisOfAlgorithms/designAndAnalysisOfAlgorithms1/week6/testCases/questionTwoTestCaseOne.txt"//"https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionTwoTestCaseOne.txt"
+val questionTwoTestInputOneURL = "https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/testCases/questionTwoTestCaseOne.txt"
 val questionTwoTestOneOutput = 9335
-val questionTwoTestOneList = scala.io.Source.fromFile(questionTwoTestInputOneURL).getLines.map(_.toLong).toList
+val questionTwoTestOneList = scala.io.Source.fromURL(questionTwoTestInputOneURL).getLines.map(_.toLong).toList
 val questionTwoTestOneMediansLessEfficient = medianStreamLessEfficient(questionTwoTestOneList)
 questionTwoTestOneMediansLessEfficient.sum % 10000 == questionTwoTestOneOutput
 
@@ -129,13 +212,16 @@ questionTwoTestOneMedians.sum % 10000 == questionTwoTestOneOutput
   */
 
 // Homework Question 1
-val questionOneInputURL = "/Users/rwp651/Documents/capital_one/git/coursera/designAndAnalysisOfAlgorithms/designAndAnalysisOfAlgorithms1/week6/algo1-programming_prob-2sum.txt"//"https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/algo1-programming_prob-2sum.txt"
+val questionOneInputURL = "https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/algo1-programming_prob-2sum.txt"
 val questionOneMap = loadMap(questionOneInputURL)
 val questionOneTwoSum = twoSumTargetRange(questionOneMap, -10000, 10000)
 questionOneTwoSum.length
 
+val questionOneLines = scala.io.Source.fromURL(questionOneInputURL).getLines.map(_.toLong).toList
+twoSumTargetRangeList(questionOneLines, -10000, 1000).length
+
 // Homework Question 2
-val questionTwoInputURL = "/Users/rwp651/Documents/capital_one/git/coursera/designAndAnalysisOfAlgorithms/designAndAnalysisOfAlgorithms1/week6/Median.txt"//"https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/Median.txt"
-val questionTwoList = scala.io.Source.fromFile(questionTwoInputURL).getLines.map(_.toLong).toList
+val questionTwoInputURL = "https://raw.githubusercontent.com/brandonmburroughs/designAndAnalysisOfAlgorithms/master/designAndAnalysisOfAlgorithms1/week6/Median.txt"
+val questionTwoList = scala.io.Source.fromURL(questionTwoInputURL).getLines.map(_.toLong).toList
 val questionTwoSum = medianStream(questionTwoList)
 questionTwoSum.sum % 10000
